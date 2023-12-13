@@ -38,15 +38,58 @@ class(CANCER$性別)
 fct_CancerGender<-factor(CANCER$性別)
 levels(fct_CancerGender)
 
-#歷年各種癌症別癌症發生數變化----
-result <- grep("全國", CANCER$縣市別)
-print(result)
-print(CANCER$縣市別[result])
+#癌症發生數----
 
-#歷年各種癌症別癌症平均年齡----
+##自1979-2020年以來哪一個癌症發生次數最高----
+CANCER |>
+  dplyr::group_by(
+    癌症別,
+  )|>
+  dplyr::summarise(
+    癌症平均發生數 = mean(癌症發生數)
+  )|>View()
+
+##歷年各種癌症別癌症發生數變化----
+CANCER |>
+  dplyr::group_by(
+    癌症診斷年,
+    性別,
+  )|>
+  dplyr::summarise(
+    癌症平均發生數 = mean(癌症發生數)
+  )|>View()
 
 
-#歷年各種癌症別癌症平均年齡中位數----
+#各種癌症別發生的平均年齡、中位數與標準差----
+##平均年齡----
+CANCER |>
+  dplyr::group_by(
+    癌症別
+  )|>
+  dplyr::summarise(
+    癌症平均年齡 = mean(平均年齡)
+  )->cancer_type_average_age
+View(cancer_type_average_age)
+
+##平均年齡中位數----
+CANCER |>
+  dplyr::group_by(
+    癌症別,
+  )|>
+  dplyr::summarise(
+    癌症平均年齡中位數 = mean(年齡中位數)
+  )->cancer_type_median_age
+View(cancer_type_median_age)
+
+##平均年齡標準----
+CANCER |>
+  dplyr::group_by(
+    癌症別,
+  )|>
+  dplyr::summarise(
+    癌症平均年齡標準化發生率= mean('年齡標準化發生率  WHO 2000世界標準人口 (每10萬人口)')
+  )->cancer_type_standard_age
+View(cancer_type_standard_age)
 
 #性別與各種癌症別癌症發生數變化----
 
