@@ -1,13 +1,12 @@
 library(readr)
 CANCER <- read_csv("https://raw.githubusercontent.com/LIAOMINSHIU/112-1-final-project-1/main/File_22018.csv")
 dplyr::glimpse(CANCER)
-#rename
-library(dplyr)
-CANCER |>
-      rename(
-        年齡標準化發生率 =年齡標準化發生率  WHO 2000世界標準人口 (每10萬人口)
-      ) 
-  )
+#rename----
+##library(dplyr)
+##CANCER |>
+     # rename(
+     #   年齡標準化發生率 = `年齡標準化發生率  WHO 2000世界標準人口 (每10萬人口)`
+     # ) 
 #paring----
 ##癌症別 46種----
 class(CANCER$癌症別)
@@ -45,31 +44,47 @@ class(CANCER$性別)
 fct_CancerGender<-factor(CANCER$性別)
 levels(fct_CancerGender)
 
-#癌症發生數----
+#以下分析只看全國欄位的資料
+country_data <- subset(CANCER, 縣市別 == "全國")
+View(country_data)
+
+#分析癌症發生數----
 
 ##自1979-2020年以來哪一個癌症發生次數最高----
-CANCER |>
+country_data|>
   dplyr::group_by(
-    癌症別,
+    癌症別
   )|>
   dplyr::summarise(
     癌症平均發生數 = mean(癌症發生數)
   )|>View()
+###前三名是：「女性乳房」、「結直腸」以及「肺、支氣管及氣管」
 
 ##歷年各種癌症別癌症發生數變化----
-CANCER |>
-  dplyr::group_by(
-    癌症診斷年,
-    性別,
-  )|>
-  dplyr::summarise(
-    癌症平均發生數 = mean(癌症發生數)
-  )|>View()
+data<-country_data %>%
+  dplyr::filter(
+      癌症別 %in% c("女性乳房", "結直腸", "肺、支氣管及氣管")
+  ) %>%
+  dplyr::group_by(癌症診斷年, 癌症別) %>%
+  dplyr::summarise(癌症平均發生數 = mean(癌症發生數)) 
 
+##將資料視覺化
+library(ggplot2)
+ggplot(data, aes(x = 癌症診斷年, y = 癌症平均發生數, fill = 癌症別)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "1978-2020年各癌症平均發生數", x = "年份", y = "平均發生數") +
+  theme_minimal() +
+  theme(legend.position = "top") +
+  facet_wrap(~癌症別, scales = "free_y", ncol = 2)  # 根據癌症類型分面
+
+  ##dplyr::arrange(
+    ##癌症平均發生數 
+ ## )-> summaries$平均發生數
+##View(summaries$平均年齡)
 
 #各種癌症別發生的平均年齡、中位數與標準差----
 ##平均年齡----
-CANCER |>
+country_data|>
   dplyr::group_by(
     癌症別
   )|>
@@ -79,26 +94,35 @@ CANCER |>
 View(cancer_type_average_age)
 
 ##平均年齡中位數----
-CANCER |>
+country_data |>
   dplyr::group_by(
-    癌症別,
+    癌症別
   )|>
   dplyr::summarise(
-    癌症平均年齡中位數 = mean(年齡中位數)
-  )->cancer_type_median_age
-View(cancer_type_median_age)
+    癌症平均年齡 = weighted.mean(平均年齡, 癌症發生數),
+  ) ->cancer_type_midian_age
+View(cancer_type_midian_age)
 
 ##平均年齡標準----
-CANCER |>
+country_data |>
   dplyr::group_by(
     癌症別,
   )|>
   dplyr::summarise(
-    癌症平均年齡標準化發生率= mean('年齡標準化發生率  WHO 2000世界標準人口 (每10萬人口)')
+    癌症平均年齡標準化發生率= mean(`年齡標準化發生率  WHO 2000世界標準人口 (每10萬人口)`)
   )->cancer_type_standard_age
 View(cancer_type_standard_age)
 
 ##平均年齡、中位數與標準差綜合分析----
+# 假設三個資料框分別為 cancer_type_average_age、cancer_type_midian_age、cancer_type_standard_age
+
+# 合併資料框 cancer_type_average_age 和 cancer_type_midian_age
+merged_data <- merge(cancer_type_average_age, cancer_type_midian_age, by = "癌症別")
+
+# 再合併資料框 merged_data 和 cancer_type_standard_age
+final_merged_data <- merge(merged_data, cancer_type_standard_age, by = "癌症別")|>View()
+
+
 ## 假設你有一個名為cancer_data的資料框（data frame），包含所需的數據
 ## 列名可能類似 "CancerType", "AgeStandardizedRate", "MedianAge", "MeanAge"
 
