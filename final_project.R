@@ -1,6 +1,7 @@
 library(readr)
 CANCER <- read_csv("https://raw.githubusercontent.com/LIAOMINSHIU/112-1-final-project-1/main/File_22018.csv")
 dplyr::glimpse(CANCER)
+View(CANCER)
 #rename----
 ##library(dplyr)
 ##CANCER |>
@@ -61,14 +62,30 @@ country_data|>
 ###前三名是：「女性乳房」、「結直腸」以及「肺、支氣管及氣管」
 
 ##歷年各種癌症別癌症發生數變化----
-data<-country_data %>%
+data<-country_data |>
   dplyr::filter(
       癌症別 %in% c("女性乳房", "結直腸", "肺、支氣管及氣管")
-  ) %>%
-  dplyr::group_by(癌症診斷年, 癌症別) %>%
-  dplyr::summarise(癌症平均發生數 = mean(癌症發生數)) 
+  ) |>
+  dplyr::group_by(癌症診斷年, 癌症別) |>
+  dplyr::summarise(癌症平均發生數 = mean(癌症發生數)) |>View()
 
-##將資料視覺化
+##將資料視覺化----
+##中文前置作業
+library(ggplot2)
+library(showtext)
+library(econDV2)
+# add google font: Noto Sans TC for chinese characters
+sysfonts::font_add_google('Noto Sans TC')
+# turn on showing chinese text in graph device
+showtext_auto()
+# set our graph theme to use the google font and a classic white back ground
+theme_set(
+  theme(
+    text=element_text(family = "Noto Sans TC")
+  )+
+    theme_classic()
+)
+
 library(ggplot2)
 ggplot(data, aes(x = 癌症診斷年, y = 癌症平均發生數, fill = 癌症別)) +
   geom_bar(stat = "identity", position = "dodge") +
@@ -131,24 +148,78 @@ install.packages("tidyverse")
 library(tidyverse)
 
 ##資料處理和分析
-CANCER %>%
+CANCER |>
   group_by(CancerType) %>%
   summarise(
     AvgAge = mean(MeanAge, na.rm = TRUE),
     MedianAge = median(MedianAge, na.rm = TRUE),
     AgeStandardizedRate = mean(AgeStandardizedRate, na.rm = TRUE)
-  ) %>%
+  ) |>
   print()
-CANCER %>%
+CANCER |>
   group_by(癌症別) %>%
   summarise(
     平均年齡 = mean(平均年齡, na.rm = TRUE),
     年齡中位數 = median(年齡中位數, na.rm = TRUE),
-    年齡標準化發生率  WHO 2000世界標準人口 (每10萬人口) = mean(`年齡標準化發生率  WHO 2000世界標準人口 (每10萬人口)`, na.rm = TRUE)
-  ) %>%
+    年齡標準化發生率= mean(`年齡標準化發生率  WHO 2000世界標準人口 (每10萬人口)`, na.rm = TRUE)
+  ) |>
   print()
 
 #性別與各種癌症別癌症發生數變化----
 
+CANCER |>
+  dplyr::filter(
+    縣市別=="全國"
+  ) |>
+  dplyr::select(
+    癌症診斷年, 癌症別, 性別, 癌症發生數
+  ) |>
+  tidyr::pivot_wider(
+    names_from = "性別",
+    values_from = "癌症發生數"
+  ) |>
+  View()
 
+#各縣市男女比與各種癌症別癌症發生數變化----
+CANCER |>
+  dplyr::filter(
+  癌症別=="全癌症"
+  ) |>
+  dplyr::select(
+    癌症診斷年, 癌症別, 縣市別, 性別, 癌症發生數
+  ) |>
+  tidyr::pivot_wider(
+    names_from = "性別",
+    values_from = "癌症發生數"
+  ) |>
+  dplyr::mutate(
+    男女比=男/女
+  ) |>
+  dplyr::select(
+    癌症診斷年, 癌症別, 縣市別,男女比
+  ) |>
+  tidyr::pivot_wider(
+    names_from = "縣市別",
+    values_from = "男女比"
+  ) ->table1
+  View(table1)
+  
+country_data |>
+  split(country_data$性別) -> split_country_data_gender
+View(split_country_data_gender)
+#老人跟年輕人看報紙找工作比例----
+which(split_dg6$年齡$項目別 == "15 ~ 19歲")
+
+split_dg6$年齡 |>
+  dplyr::group_by(
+    年度
+  ) |>
+  dplyr::summarise(
+    老人跟年輕人看報紙找工作比例 =
+      看報紙[[which(項目別 == "15 ~ 19歲")]]/
+      看報紙[[which(項目別 == "65歲及以上")]]
+  )
+
+CANCER|>
+dplyr::filter( 縣市別=="連江縣" , 癌症診斷年 == "1979", 癌症別 == "全癌症")|>View()
 
